@@ -170,6 +170,14 @@ func (r *Repository) Commit(m Mutation) (CommandResult, bool, error) {
 	if err := ValidateAggregate(m.Aggregate); err != nil {
 		return CommandResult{}, false, fmt.Errorf("案件投影校验失败: %w", err)
 	}
+	// The aggregate stored in the snapshot must be fully isolated from the
+	// caller's object, so that mutating fields or nested slices of the value
+	// returned by a successful command cannot leak into Get/List/History
+	// results. cloneAggregate performs a deep copy via JSON round-trip.
+	stored, err := cloneAggregate(m.Aggregate)
+	if err != nil {
+		return CommandResult{}, false, err
+	}
 	payload, err := json.Marshal(m.Aggregate)
 	if err != nil {
 		return CommandResult{}, false, err
@@ -189,7 +197,7 @@ func (r *Repository) Commit(m Mutation) (CommandResult, bool, error) {
 	result := CommandResult{CaseID: m.CaseID, Version: m.Aggregate.Case.Version, EventKind: m.Kind, Response: response}
 	r.snapshot.Sequence = event.Sequence
 	r.snapshot.LastHash = event.Hash
-	r.snapshot.Cases[m.CaseID] = m.Aggregate
+	r.snapshot.Cases[m.CaseID] = stored
 	r.snapshot.Idempotency[m.IdempotencyKey] = result
 	if err := r.writeSnapshotLocked(); err != nil {
 		return CommandResult{}, false, err
