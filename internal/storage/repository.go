@@ -184,13 +184,13 @@ func (r *Repository) Commit(m Mutation) (CommandResult, bool, error) {
 		return CommandResult{}, false, err
 	}
 	result := CommandResult{CaseID: m.CaseID, Version: m.Aggregate.Case.Version, EventKind: m.Kind, Response: response}
+	if err := r.appendEventLocked(event); err != nil {
+		return CommandResult{}, false, err
+	}
 	r.snapshot.Sequence = event.Sequence
 	r.snapshot.LastHash = event.Hash
 	r.snapshot.Cases[m.CaseID] = m.Aggregate
 	r.snapshot.Idempotency[m.IdempotencyKey] = result
-	if err := r.appendEventLocked(event); err != nil {
-		return CommandResult{}, false, err
-	}
 	if err := r.writeSnapshotLocked(); err != nil {
 		return CommandResult{}, false, err
 	}
