@@ -21,7 +21,6 @@ type Repository struct {
 	dir          string
 	eventPath    string
 	snapshotPath string
-	eventReader  *os.File
 	snapshot     Snapshot
 	now          func() time.Time
 }
