@@ -62,7 +62,7 @@ func (r *Repository) Search(query string, status domain.CaseStatus) ([]domain.Ag
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	needle := strings.ToLower(strings.TrimSpace(query))
-	r.queryBuffer = r.queryBuffer[:0]
+	items := make([]domain.Aggregate, 0, len(r.snapshot.Cases))
 	for _, aggregate := range r.snapshot.Cases {
 		if status != "" && aggregate.Case.Status != status {
 			continue
@@ -75,10 +75,10 @@ func (r *Repository) Search(query string, status domain.CaseStatus) ([]domain.Ag
 		if err != nil {
 			return nil, err
 		}
-		r.queryBuffer = append(r.queryBuffer, copyItem)
+		items = append(items, copyItem)
 	}
-	sort.Slice(r.queryBuffer, func(i, j int) bool { return r.queryBuffer[i].Case.UpdatedAt.After(r.queryBuffer[j].Case.UpdatedAt) })
-	return r.queryBuffer, nil
+	sort.Slice(items, func(i, j int) bool { return items[i].Case.UpdatedAt.After(items[j].Case.UpdatedAt) })
+	return items, nil
 }
 
 func (r *Repository) EventPage(caseID string, after int64, limit int) ([]Event, error) {
