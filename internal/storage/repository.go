@@ -71,8 +71,12 @@ func (r *Repository) load() error {
 		if err := json.Unmarshal(event.Payload, &aggregate); err != nil {
 			return fmt.Errorf("重放事件 %d: %w", event.Sequence, err)
 		}
+		response, err := json.Marshal(aggregate)
+		if err != nil {
+			return fmt.Errorf("重放事件 %d 响应: %w", event.Sequence, err)
+		}
 		r.snapshot.Cases[event.CaseID] = aggregate
-		r.snapshot.Idempotency[event.IdempotencyKey] = CommandResult{CaseID: event.CaseID, Version: event.Version, EventKind: event.Kind}
+		r.snapshot.Idempotency[event.IdempotencyKey] = CommandResult{CaseID: event.CaseID, Version: event.Version, EventKind: event.Kind, Response: response}
 		r.snapshot.Sequence = event.Sequence
 		r.snapshot.LastHash = event.Hash
 	}
