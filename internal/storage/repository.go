@@ -59,13 +59,14 @@ func (r *Repository) load() error {
 	} else if !os.IsNotExist(err) {
 		return fmt.Errorf("读取快照: %w", err)
 	}
-	events, err := r.readEventsAfter(r.snapshot.Sequence)
+	allEvents, err := r.readEventsAfter(0)
 	if err != nil {
 		return err
 	}
-	if !ValidateEventChain(events, r.snapshot.Sequence, r.snapshot.LastHash) {
+	if !ValidateEventChain(allEvents, 0, "") {
 		return errors.New("事件日志校验链不连续")
 	}
+	events := eventsAfter(allEvents, r.snapshot.Sequence)
 	for _, event := range events {
 		var aggregate domain.Aggregate
 		if err := json.Unmarshal(event.Payload, &aggregate); err != nil {

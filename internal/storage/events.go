@@ -37,6 +37,16 @@ func (r *Repository) Events(caseID string) ([]Event, error) {
 	return result, nil
 }
 
+func eventsAfter(events []Event, sequence int64) []Event {
+	result := make([]Event, 0, len(events))
+	for _, event := range events {
+		if event.Sequence > sequence {
+			result = append(result, event)
+		}
+	}
+	return result
+}
+
 func (r *Repository) Verify() error {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
