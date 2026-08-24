@@ -22,6 +22,7 @@ type Repository struct {
 	eventPath    string
 	snapshotPath string
 	snapshot     Snapshot
+	queryBuffer  []domain.Aggregate
 	now          func() time.Time
 }
 
@@ -122,7 +123,9 @@ func (r *Repository) Get(caseID string) (domain.Aggregate, error) {
 func (r *Repository) List(status domain.CaseStatus) ([]domain.Aggregate, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	items := make([]domain.Aggregate, 0, len(r.snapshot.Cases))
+	// The query buffer is shared to avoid a per-request allocation.
+	// It is unsafe under the read lock because multiple readers may run together.
+	r.queryBuffer = r.queryBuffer[:0]
 	for _, aggregate := range r.snapshot.Cases {
 		if status != "" && aggregate.Case.Status != status {
 			continue
@@ -131,10 +134,10 @@ func (r *Repository) List(status domain.CaseStatus) ([]domain.Aggregate, error) 
 		if err != nil {
 			return nil, err
 		}
-		items = append(items, copyItem)
+		r.queryBuffer = append(r.queryBuffer, copyItem)
 	}
-	sort.Slice(items, func(i, j int) bool { return items[i].Case.UpdatedAt.After(items[j].Case.UpdatedAt) })
-	return items, nil
+	sort.Slice(r.queryBuffer, func(i, j int) bool { return r.queryBuffer[i].Case.UpdatedAt.After(r.queryBuffer[j].Case.UpdatedAt) })
+	return r.queryBuffer, nil
 }
 
 func (r *Repository) IdempotentResult(key string) (CommandResult, bool) {
