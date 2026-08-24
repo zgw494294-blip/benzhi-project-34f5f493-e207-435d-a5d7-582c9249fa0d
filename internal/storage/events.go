@@ -9,17 +9,19 @@ import (
 )
 
 func (r *Repository) Events(caseID string) ([]Event, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	file, err := os.Open(r.eventPath)
-	if os.IsNotExist(err) {
-		return []Event{}, nil
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.eventReader == nil {
+		file, err := os.Open(r.eventPath)
+		if os.IsNotExist(err) {
+			return []Event{}, nil
+		}
+		if err != nil {
+			return nil, err
+		}
+		r.eventReader = file
 	}
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	decoder := json.NewDecoder(bufio.NewReader(file))
+	decoder := json.NewDecoder(bufio.NewReader(r.eventReader))
 	result := []Event{}
 	for {
 		var event Event
