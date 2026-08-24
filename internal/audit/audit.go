@@ -27,21 +27,15 @@ type Logger struct {
 func New() *Logger { return &Logger{events: map[string][]Event{}} }
 
 func (l *Logger) Record(event Event) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
 	l.events[event.CaseID] = append(l.events[event.CaseID], event)
 }
 
 func (l *Logger) Timeline(caseID string) []Event {
-	l.mu.RLock()
-	defer l.mu.RUnlock()
 	result := append([]Event(nil), l.events[caseID]...)
 	return result
 }
 
 func (l *Logger) All() []Event {
-	l.mu.RLock()
-	defer l.mu.RUnlock()
 	var result []Event
 	for _, events := range l.events {
 		result = append(result, events...)
