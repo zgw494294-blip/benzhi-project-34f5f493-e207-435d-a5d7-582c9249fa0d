@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"strings"
+	"sync"
 	"time"
 
 	"powerpermit/internal/audit"
@@ -17,10 +18,19 @@ type Service struct {
 	audit *audit.Logger
 	now   func() time.Time
 	id    func() string
+
+	readinessMu    sync.RWMutex
+	readinessCache map[string]Readiness
 }
 
 func New(repo *storage.Repository, logger *audit.Logger) *Service {
-	return &Service{repo: repo, audit: logger, now: func() time.Time { return time.Now().UTC() }, id: newID}
+	return &Service{
+		repo:           repo,
+		audit:          logger,
+		now:            func() time.Time { return time.Now().UTC() },
+		id:             newID,
+		readinessCache: map[string]Readiness{},
+	}
 }
 
 func newID() string {

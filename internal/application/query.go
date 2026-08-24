@@ -43,6 +43,9 @@ func (s *Service) Search(query string, status domain.CaseStatus) ([]domain.Aggre
 }
 
 func (s *Service) Readiness(caseID string) (Readiness, error) {
+	if cached, ok := s.cachedReadiness(caseID); ok {
+		return cached, nil
+	}
 	aggregate, err := s.repo.Get(caseID)
 	if err != nil {
 		return Readiness{}, err
@@ -70,7 +73,25 @@ func (s *Service) Readiness(caseID string) (Readiness, error) {
 	if aggregate.Case.Status == domain.StatusPermitted && !result.PermitVerified {
 		result.Reasons = append(result.Reasons, "许可内容摘要校验失败")
 	}
+	s.storeReadiness(caseID, result)
 	return result, nil
+}
+
+func (s *Service) cachedReadiness(caseID string) (Readiness, bool) {
+	s.readinessMu.RLock()
+	defer s.readinessMu.RUnlock()
+	result, ok := s.readinessCache[caseID]
+	result.OpenFindingIDs = append([]string(nil), result.OpenFindingIDs...)
+	result.Reasons = append([]string(nil), result.Reasons...)
+	return result, ok
+}
+
+func (s *Service) storeReadiness(caseID string, readiness Readiness) {
+	s.readinessMu.Lock()
+	defer s.readinessMu.Unlock()
+	readiness.OpenFindingIDs = append([]string(nil), readiness.OpenFindingIDs...)
+	readiness.Reasons = append([]string(nil), readiness.Reasons...)
+	s.readinessCache[caseID] = readiness
 }
 
 func (s *Service) PersistentTimeline(caseID string) ([]audit.Event, audit.TimelineDigest, error) {
