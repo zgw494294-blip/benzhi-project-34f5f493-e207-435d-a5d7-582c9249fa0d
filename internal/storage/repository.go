@@ -170,7 +170,15 @@ func (r *Repository) Commit(m Mutation) (CommandResult, bool, error) {
 	if err := ValidateAggregate(m.Aggregate); err != nil {
 		return CommandResult{}, false, fmt.Errorf("案件投影校验失败: %w", err)
 	}
-	payload, err := json.Marshal(m.Aggregate)
+	eventAggregate := m.Aggregate
+	activeFindings := make([]domain.InspectionFinding, 0, len(eventAggregate.Findings))
+	for _, finding := range eventAggregate.Findings {
+		if finding.ResolvedAt == nil {
+			activeFindings = append(activeFindings, finding)
+		}
+	}
+	eventAggregate.Findings = activeFindings
+	payload, err := json.Marshal(eventAggregate)
 	if err != nil {
 		return CommandResult{}, false, err
 	}
