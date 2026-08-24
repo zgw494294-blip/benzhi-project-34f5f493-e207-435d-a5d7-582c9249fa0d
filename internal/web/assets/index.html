@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>临时活动用电送电许可工作台</title>
+  <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div><span class="mark">安</span><div><strong>临时用电许可</strong><small>现场电气安全工作台</small></div></div>
+    <button id="new-case" class="primary">新建档案</button>
+  </header>
+  <main class="workspace">
+    <aside class="case-rail">
+      <div class="rail-heading"><h2>活动档案</h2><span id="case-count">0 项</span></div>
+      <div id="case-list" class="case-list"></div>
+    </aside>
+    <section id="empty" class="empty-state"><div class="empty-icon">⚡</div><h1>建立第一份用电档案</h1><p>从活动资料开始，沿检查与复核流程签发送电许可。</p></section>
+    <section id="detail" class="detail hidden">
+      <div class="detail-head"><div><span id="status" class="status"></span><h1 id="activity-name"></h1><p id="venue"></p></div><div class="version">聚合版本 <strong id="version"></strong></div></div>
+      <nav class="steps" aria-label="办理进度"><span>档案</span><span>方案</span><span>检查</span><span>整改</span><span>复核</span><span>许可</span></nav>
+      <div id="summary" class="summary-grid"></div>
+      <section class="panel"><div class="panel-head"><h2>当前办理</h2><span id="next-label"></span></div><div id="action-area"></div></section>
+      <section class="panel"><div class="panel-head"><h2>检查与整改记录</h2></div><div id="finding-list" class="records"></div></section>
+      <section class="panel"><div class="panel-head"><h2>审计时间线</h2><button id="refresh-audit" class="icon-button" title="刷新审计记录">↻</button></div><div id="audit-list" class="timeline"></div></section>
+    </section>
+  </main>
+  <dialog id="create-dialog"><form id="create-form"><div class="dialog-head"><h2>新建临时用电档案</h2><button type="button" data-close class="icon-button" title="关闭">×</button></div><label>活动名称<input name="activityName" required></label><label>活动场地<input name="venue" required></label><div class="two"><label>开始时间<input name="startAt" type="datetime-local" required></label><label>结束时间<input name="endAt" type="datetime-local" required></label></div><div class="two"><label>联系人<input name="contactName" required></label><label>联系电话<input name="contactPhone" required></label></div><label>风险等级<select name="riskLevel"><option value="LOW">低风险</option><option value="MEDIUM" selected>中风险</option><option value="HIGH">高风险</option></select></label><div class="dialog-actions"><button type="button" data-close>取消</button><button class="primary">建立档案</button></div></form></dialog>
+  <div id="toast" role="status"></div>
+  <script src="/assets/app.js"></script>
+</body>
+</html>
