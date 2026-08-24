@@ -34,6 +34,9 @@ func (r *Repository) Events(caseID string) ([]Event, error) {
 			result = append(result, event)
 		}
 	}
+	if !ValidateEventChain(result, 0, "") {
+		return nil, errors.New("事件日志校验链不连续")
+	}
 	return result, nil
 }
 
